@@ -1,5 +1,5 @@
-site_name: MPU-9250 TI-RTOS Driver
-site_description: A comprehensive C/C++ driver for the MPU-9250 on the TI-RTOS platform.
+site_name: MPU-6500/9250 TI-RTOS Driver
+site_description: A comprehensive C/C++ driver for the MPU-6500 and MPU-9250 on the TI-RTOS platform.
 docs_dir: doc
 theme:
   name: material
@@ -23,5 +23,5 @@ theme:
 nav:
   - 'Home': 'index.md'
   - 'API Reference':
-    - 'Base C Library': 'api/c_library.md'
+    #- 'Base C Library': 'api/c_library.md'
     - 'C++ DMP Class': 'api/cpp_class.md'

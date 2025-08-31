@@ -9,7 +9,7 @@ This library provides everything you need to go from raw sensor readings to a fu
 ## Features
 
 - **Multi-Level API:** Choose the abstraction level that fits your needs:
-  - A simple C library for direct register access and raw data.
+  - A simple C library for direct register access and raw data (Work In Progress, needs refactoring).
   - A high-level C++ class that encapsulates the complex InvenSense DMP.
   - A C-compatible wrapper for using the DMP from any C project.
 - **Sensor Fusion Options:** Includes a lightweight **Complementary Filter** and a full implementation of the onboard **Digital Motion Processor (DMP)** for 6-axis quaternion output.
@@ -23,37 +23,20 @@ The library is split into three parts, located in the `lib/` directory.
 
 This is a low-level C driver for initializing the sensor and getting raw, calibrated data. It also includes a basic complementary filter.
 
-**Example Usage:**
+Currently unavailable
 
-```c
-#include "lib/MPU9250.h"
-
-// In your task...
-IMUData imu;
-EulerAngles angles;
-Vector3D accelBias = {/* from calibration */};
-Vector3D gyroBias = {/* from calibration */};
-
-MPU9250_init(i2c_handle, &i2c_transaction, &imu);
-
-while(1) {
-    MPU9250_readAccTempGyr(i2c_handle, &i2c_transaction, raw_buffer);
-    MPU9250_unitConversion(raw_buffer, &imu, accelBias, gyroBias);
-    MPU9250_calculateAngle(&imu, &angles, dt, 0.98f, 0.5f);
-    Task_sleep(10);
-}
-```
-
-### 2. C++ DMP Wrapper (`MPU9250_DMP.h`/`.cpp`)
+### 2. C++ DMP Wrapper (`MPU_DMP.h`/`.cpp`)
 
 A modern C++ class that wraps the complex, proprietary InvenSense DMP driver, providing a clean, object-oriented API. This is the recommended way to use the DMP in a C++ project.
 
 Example Usage:
 
 ```cpp
-#include "lib/MPU9250_DMP.h"
+#include "lib/MPU_DMP.h"
+#include "lib/util/inv_mpu.h"
+#include "lib/util/inv_mpu_dmp_motion_driver.h"
 
-MPU9250_DMP dmp;
+MPU_DMP dmp;
 dmp.begin();
 dmp.dmpBegin(DMP_FEATURE_6X_LP_QUAT, 100); // 100 Hz FIFO rate
 
@@ -66,26 +49,28 @@ while(1) {
 }
 ```
 
-### 3. C-Compatible DMP Wrapper (`MPU9250_DMP_C.h`/`.cpp`)
+### 3. C-Compatible DMP Wrapper (`MPU_DMP_C.h`/`.cpp`)
 
 A C-style wrapper that allows you to safely use the C++ DMP class from a standard C project using an opaque pointer.
 
 Example Usage:
 
 ```c
-#include "lib/MPU9250_DMP_C.h"
+#include "lib/MPU_DMP_C.h"
+#include "lib/util/inv_mpu.h"
+#include "lib/util/inv_mpu_dmp_motion_driver.h"
 
-MPU9250_DMP_Handle dmp_handle = MPU9250_DMP_Create();
-MPU9250_DMP_begin(dmp_handle);
+MPU_DMP_Handle dmp_handle = MPU_DMP_Create();
+MPU_DMP_begin(dmp_handle);
 // ... setup DMP ...
 
 while(1) {
-    if (MPU9250_DMP_dmpUpdateFifo(dmp_handle) == 0) {
+    if (MPU_DMP_dmpUpdateFifo(dmp_handle) == 0) {
         // Get quaternion data and compute angles...
     }
     Task_sleep(10);
 }
-MPU9250_DMP_Destroy(dmp_handle);
+MPU_DMP_Destroy(dmp_handle);
 ```
 
 ## License
@@ -95,4 +80,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Acknowledgements
 
 The core DMP driver is based on the work by InvenSense/TDK.
+
 The C++ wrapper is an adaptation of the excellent [SparkFun MPU-9250 DMP Arduino Library](https://github.com/sparkfun/SparkFun_MPU-9250-DMP_Arduino_Library).
