@@ -19,6 +19,8 @@ This library provides everything you need to go from raw sensor readings to a fu
 
 The library is split into three parts, located in the `lib/` directory.
 
+Read the full [API reference](https://bubi2001.github.io/MPU9250DMP-TI-RTOS/) for specific methods and functions availables
+
 ### 1. Base C Library (`MPU9250.h`/`.c`)
 
 This is a low-level C driver for initializing the sensor and getting raw, calibrated data. It also includes a basic complementary filter.
