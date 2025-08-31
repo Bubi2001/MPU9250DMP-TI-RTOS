@@ -1,5 +1,3 @@
-// File: dmp_hal_stubs.c
-
 #include <stdio.h>
 #include <xdc/runtime/System.h>
 #include "util/inv_mpu.h" // Needed for the int_param_s struct definition
