@@ -23,5 +23,5 @@ theme:
 nav:
   - 'Home': 'index.md'
   - 'API Reference':
-    #- 'Base C Library': 'api/c_library.md'
+    - 'Base C Library': 'api/c_driver.md'
     - 'C++ DMP Class': 'api/cpp_class.md'
