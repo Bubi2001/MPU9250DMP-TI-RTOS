@@ -15,12 +15,12 @@ jobs:
       - name: Package Release Archive
         run: |
           VERSION=${GITHUB_REF##*/}
-          zip -r MPU6500-9250-TI-RTOS-Driver-Release-${VERSION}.zip lib/
+          zip -r MPU-9250-TI-RTOS-Driver-Release-${VERSION}.zip lib/ examples/
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-assets
-          path: MPU6500-9250-TI-RTOS-Driver-Release-*.zip
+          path: MPU-9250-TI-RTOS-Driver-Release-*.zip
 
   create_release:
     name: 🚀 Create GitHub Release
@@ -36,11 +36,11 @@ jobs:
       - name: Create Release and Upload Assets
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "MPU6500-9250-TI-RTOS-Driver-Release-*.zip"
+          artifacts: "MPU-9250-TI-RTOS-Driver-Release-*.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
           append_body: true
           body: |
             ---
             **📖 View the full documentation for this version online:**
-            [https://bubi2001.github.io/MPU9250_MSP-EXP432E401Y/](https://bubi2001.github.io/MPU9250_MSP-EXP432E401Y/)
+            [https://bubi2001.github.io/MPU9250DMP-TI-RTOS/](https://bubi2001.github.io/MPU9250DMP-TI-RTOS/)
