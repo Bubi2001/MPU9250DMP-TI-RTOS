@@ -8,15 +8,12 @@ This library provides everything you need to go from raw sensor readings to a fu
 
 ## Features
 
--**Multi-Level API:** Choose the abstraction level that fits your needs:
-
-- A simple C library for direct register access and raw data.
-- A high-level C++ class that encapsulates the complex InvenSense DMP.
-- A C-compatible wrapper for using the DMP from any C project.
-
--**Sensor Fusion Options:** Includes a lightweight **Complementary Filter** and a full implementation of the onboard **Digital Motion Processor (DMP)** for 6-axis quaternion output.
-
--**TI-RTOS Integration:** Designed from the ground up for a real-time, task-based environment, using TI Drivers for I2C and TI-RTOS primitives for timing.
+- **Multi-Level API:** Choose the abstraction level that fits your needs:
+  - A C library for direct register access, raw data and a complete sensor fusion hub.
+  - A high-level C++ class that encapsulates the complex InvenSense DMP.
+  - A C-compatible wrapper for using the DMP from any C project.
+- **Sensor Fusion Options:** Includes a full implementation of the onboard **Digital Motion Processor (DMP)** for 6-axis quaternion output. The low-level C library includes options for simple **Complementary Filter** as well as advanced  **Madgwick and Mahony Filters** for either 6-axis or 9-axis quaternion output, with the possibility to convert to Euler Angles directly.
+- **TI-RTOS Integration:** Designed from the ground up for a real-time, task-based environment, using TI Drivers for I2C and TI-RTOS primitives for timing.
 
 ## License
 
