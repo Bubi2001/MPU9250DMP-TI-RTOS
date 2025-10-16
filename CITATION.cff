@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Babiano Novella"
+    given-names: "Adrià"
+title: "A comprehensive, easy-to-use I2C driver for the MPU-9250 IMU and MPU-6500 IMU, specifically tailored for the TI-RTOS environment on the MSP-EXP432E401Y platform."
+version: 2.1.0
+date-released: 2025-09-17
+repository-code: "https://github.com/Bubi2001/MPU9250DMP-TI-RTOS"
+license: MIT
+keywords:
+  - "C"
+  - "C++"
+  - "IMU"
+  - "open-source software"
