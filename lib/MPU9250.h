@@ -5,9 +5,9 @@
 // Description         : 
 //     Header file for MPU9250 IMU sensor driver
 //      defines constants, register maps, function prototypes, and hardware drivers
-//      for interacting via I2C and a GPIO on TI-RTOS
+//      for interacting via I2C on TI-RTOS
 // 
-// Author              : Adrià Babiano Novella
+// Author              : Adria  Babiano Novella
 // Create Date         : 2024-12-01
 // Revision            : v2.0
 // ================================================================================
@@ -32,7 +32,6 @@
 #include <stdbool.h>
 
 #include <ti/drivers/I2C.h>
-#include <ti/drivers/GPIO.h>
 
 #include <xdc/runtime/Types.h>
 #include <xdc/runtime/System.h>
@@ -373,15 +372,6 @@ typedef union FusionParams {
     MahonyFilterParams        mahony;
 } FusionParams;
 
-/** @brief Internal state for the sensor fusion module. */
-typedef struct MPU9250_FusionState {
-    FusionAlgorithm_e algorithm;  /**< The selected fusion algorithm. */
-    FusionParams params;          /**< Parameters for the selected algorithm. */
-    MPU9250_Quaternion orientation; /**< The calculated orientation as a quaternion. */
-    MPU9250_EulerAngles euler;    /**< The calculated orientation as Euler angles (in radians). */
-    MPU9250_Vector3D mahonyIntegralError; /**< Integral error term for the Mahony filter. */
-} MPU9250_FusionState;
-
 /** @brief Status codes returned by driver functions. */
 typedef enum MPU9250_Status_e {
     MPU9250_OK,                 /**< Operation was successful. */
@@ -521,6 +511,15 @@ typedef struct FIFO_Config {
     uint8_t enabledSources;        /**< Bitmask of sensor data to store in FIFO (from FIFO_Source_e) */
 } FIFO_Config;
 
+/** @brief Internal state for the sensor fusion module. */
+typedef struct MPU9250_FusionState {
+    FusionAlgorithm_e algorithm;  /**< The selected fusion algorithm. */
+    FusionParams params;          /**< Parameters for the selected algorithm. */
+    MPU9250_Quaternion orientation; /**< The calculated orientation as a quaternion. */
+    MPU9250_EulerAngles euler;    /**< The calculated orientation as Euler angles (in radians). */
+    MPU9250_Vector3D mahonyIntegralError; /**< Integral error term for the Mahony filter. */
+} MPU9250_FusionState;
+
 /**
  * @brief Structure to hold all user-configurable settings for initialization.
  */
@@ -557,7 +556,6 @@ typedef struct MPU9250_Handle {
     I2C_Handle i2cHandle;             /**< Handle to the I2C peripheral from TI-RTOS. */
     I2C_Transaction *i2cTransaction;  /**< Pointer to a user-provided I2C transaction struct. */
     uint8_t i2cAddress;               /**< The I2C address of the sensor. */
-    uint8_t pwrGPIO;                  /**< GPIO index to power on or off device */
 
     /* Sensor State & Data */
     bool hasMag;                      /**< True if an AK8963 magnetometer is detected. */
@@ -602,10 +600,9 @@ void MPU9250_getDefaultConfig(MPU9250_Config *config);
  * @param[in]  i2c Handle to the TI-RTOS I2C peripheral.
  * @param[in]  transaction Pointer to a user-provided I2C transaction structure.
  * @param[in]  config Pointer to a configuration structure with the desired settings.
- * @param[in]  pwrGPIO GPIO index used to power on or off the device.
  * @return MPU9250_Status_e Status code indicating the result of the operation.
  */
-MPU9250_Status_e MPU9250_init(MPU9250_Handle **sensor_p, const I2C_Handle i2c, const I2C_Transaction *transaction, const MPU9250_Config *config, const uint8_t pwrGPIO);
+MPU9250_Status_e MPU9250_init(MPU9250_Handle **sensor_p, I2C_Handle i2c, I2C_Transaction *transaction, const MPU9250_Config *config);
 
 /**
  * @brief Deinitializes the sensor and frees the handle's memory.
@@ -653,7 +650,7 @@ MPU9250_Status_e MPU9250_calibrate(MPU9250_Handle *sensor, const uint16_t numSam
  * @param[in]  frame The desired reference frame (FRAME_NED or FRAME_ENU).
  * @return MPU9250_Status_e Status code indicating the result of the operation.
  */
-MPU9250_Status_e MPU9250_determineOrientationAxes(const MPU9250_Handle *sensor, MPU9250_Matrix3x3 *matrix, const ReferenceFrame_e frame);
+MPU9250_Status_e MPU9250_determineOrientationAxes(MPU9250_Handle *sensor, MPU9250_Matrix3x3 *matrix, const ReferenceFrame_e frame);
 
 /**
  * @brief Applies a rotation to a 3D vector using a rotation matrix.

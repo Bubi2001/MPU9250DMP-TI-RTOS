@@ -5,9 +5,9 @@
 // Description         : 
 //     Source code file for MPU9250 IMU sensor driver
 //      defines constants, register maps, function prototypes, and hardware drivers
-//      for interacting via I2C and a GPIO on TI-RTOS
+//      for interacting via I2C on TI-RTOS
 // 
-// Author              : Adrià Babiano Novella
+// Author              : Adria  Babiano Novella
 // Create Date         : 2024-12-01
 // Revision            : v2.0
 // ================================================================================
@@ -25,15 +25,6 @@
 
 
 // --- Helper Functions ---
-/**
- * @brief Controls the power supply to the MPU9250 via GPIO.
- * @param pwr Boolean indicating desired power state (true = ON, false = OFF). [in]
- */
-static void _PWRIMU(MPU9250_Handle *sensor, bool pwr) {
-    // Write the GPIO pin state: 1 for true (ON), 0 for false (OFF)
-    GPIO_write(sensor->pwrGPIO, pwr ? 1 : 0);
-}
-
 /**
  * @brief  Writes a single byte to a specific MPU6500 register.
  * @param  sensor Pointer to the sensor handle.
@@ -207,7 +198,7 @@ static void _updateMadgwickFilter(MPU9250_Handle *sensor, FusionDOF_e dof, float
     float s0, s1, s2, s3;
     float qDot1, qDot2, qDot3, qDot4;
     float hx, hy;
-    float _2q0mx, _2q0my, _2q0mz, _2q1mx, _2bx, _2bz, _4bx, _4bz;
+    float _2bx, _2bz, _4bx, _4bz;
     float _2q0, _2q1, _2q2, _2q3, _2q0q2, _2q2q3, q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;
     bool useMag = (dof == FUSION_DOF_9) && sensor->hasMag && !((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f));
 
@@ -229,7 +220,6 @@ static void _updateMadgwickFilter(MPU9250_Handle *sensor, FusionDOF_e dof, float
         if (useMag) {
             recipNorm = invSqrt(mx * mx + my * my + mz * mz);
             mx *= recipNorm; my *= recipNorm; mz *= recipNorm;
-            _2q0mx = 2.0f * q0 * mx; _2q0my = 2.0f * q0 * my; _2q0mz = 2.0f * q0 * mz; _2q1mx = 2.0f * q1 * mx;
             hx = mx * (q0q0 + q1q1 - q2q2 - q3q3) + my * (2.0f * (q1q2 - q0q3)) + mz * (2.0f * (q1q3 + q0q2));
             hy = mx * (2.0f * (q1q2 + q0q3)) + my * (q0q0 - q1q1 + q2q2 - q3q3) + mz * (2.0f * (q2q3 - q0q1));
             _2bx = sqrtf(hx * hx + hy * hy);
@@ -354,7 +344,7 @@ void MPU9250_getDefaultConfig(MPU9250_Config *config) {
     config->enableFsync = false;
 }
 
-MPU9250_Status_e MPU9250_init(MPU9250_Handle **sensor_p, const I2C_Handle i2c, const I2C_Transaction *transaction, const MPU9250_Config *config, const uint8_t pwrGPIO) {
+MPU9250_Status_e MPU9250_init(MPU9250_Handle **sensor_p, I2C_Handle i2c, I2C_Transaction *transaction, const MPU9250_Config *config) {
     MPU9250_Handle *sensor;
     uint8_t whoami = 0;
     float accel_fsr_val, gyro_fsr_val;
@@ -375,7 +365,6 @@ MPU9250_Status_e MPU9250_init(MPU9250_Handle **sensor_p, const I2C_Handle i2c, c
     sensor->i2cAddress = config->i2cAddress;
     sensor->i2cTransaction->slaveAddress = config->i2cAddress;
     sensor->sampleRate = 1000.0f / (1.0f + config->sampleRateDivider);
-    sensor->pwrGPIO = pwrGPIO;
 
     if (!_writeReg(sensor, MPU6500_PWR_MGMT_1_ADDR, MPU6500_PWR_MGMT_1_H_RESET_BIT)) return MPU9250_ERROR_I2C;
     Task_sleep(100);
@@ -387,15 +376,23 @@ MPU9250_Status_e MPU9250_init(MPU9250_Handle **sensor_p, const I2C_Handle i2c, c
     switch(whoami) {
         case MPU9250_WHO_AM_I:
             sensor->hasMag = true;
+            System_printf("Who Am I measured: 0x71, sensor is MPU9250\n");
+            System_flush();
             break;
         case MPU9255_WHO_AM_I:
             sensor->hasMag = true;
+            System_printf("Who Am I measured: 0x73, sensor is MPU9255\n");
+            System_flush();
             break;
         case MPU6500_WHO_AM_I:
             sensor->hasMag = false;
+            System_printf("Who Am I measured: 0x70, sensor is MPU6500\n");
+            System_flush();
             break;
         default:
             MPU9250_deinit(sensor);
+            System_printf("Who Am I measured: 0x%2x, unknown device\n", whoami);
+            System_flush();
             return MPU9250_ERROR_WHO_AM_I;
     }
 
@@ -428,10 +425,10 @@ MPU9250_Status_e MPU9250_init(MPU9250_Handle **sensor_p, const I2C_Handle i2c, c
             sensor->magScale = (config->magOutput == MAG_OUT_16_BIT) ? (4912.0f / 32760.0f) : (4912.0f / 8190.0f);
         }
     }
-    return MPU9250_OK;
-
     System_printf("MPU9250 Initialization complete.\n");
     System_flush();
+
+    return MPU9250_OK;
 }
 
 void MPU9250_deinit(MPU9250_Handle *sensor) {
@@ -571,7 +568,7 @@ MPU9250_Status_e MPU9250_calibrate(MPU9250_Handle *sensor, const uint16_t numSam
     return MPU9250_OK;
 }
 
-MPU9250_Status_e MPU9250_determineOrientationAxes(const MPU9250_Handle *sensor, MPU9250_Matrix3x3 *matrix, const ReferenceFrame_e frame) {
+MPU9250_Status_e MPU9250_determineOrientationAxes(MPU9250_Handle *sensor, MPU9250_Matrix3x3 *matrix, const ReferenceFrame_e frame) {
     uint8_t rawData[14];
     MPU9250_Vector3D vertical_vec = {0}, forward_vec = {0};
     MPU9250_Vector3D world_x = {0}, world_y = {0}, world_z = {0};
@@ -583,7 +580,6 @@ MPU9250_Status_e MPU9250_determineOrientationAxes(const MPU9250_Handle *sensor, 
     uint32_t startTime;
     Types_FreqHz freq;
     int16_t gx, gy, gz;
-    MPU9250_Matrix3x3 R_transpose;
 
     if (!sensor || !matrix) return MPU9250_ERROR_INVALID_PARAM;
 
@@ -710,13 +706,13 @@ MPU9250_Status_e MPU9250_SensorFusionUpdate(MPU9250_Handle *sensor, FusionDOF_e 
     return MPU9250_OK;
 }
 
-MPU9250_Status_e MPU9250_getOrientation(MPU9250_Handle *sensor, MPU9250_Quaternion *q) {
+MPU9250_Status_e MPU9250_getOrientation(const MPU9250_Handle *sensor, MPU9250_Quaternion *q) {
     if (!sensor || !q) return MPU9250_ERROR_INVALID_PARAM;
     *q = sensor->fusion.orientation;
     return MPU9250_OK;
 }
 
-MPU9250_Status_e MPU9250_getEulerAngles(MPU9250_Handle *sensor, MPU9250_EulerAngles *angles) {
+MPU9250_Status_e MPU9250_getEulerAngles(const MPU9250_Handle *sensor, MPU9250_EulerAngles *angles) {
     MPU9250_Quaternion q;
     if (!sensor || !angles) return MPU9250_ERROR_INVALID_PARAM;
     q = sensor->fusion.orientation;
